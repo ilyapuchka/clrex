@@ -187,7 +187,6 @@ struct iOS: Template {
     let method  = "UIColor(red: %f, green: %f, blue: %f, alpha: %f)"
 }
 
-
 enum Platform: String {
     case osx
     case ios
@@ -232,9 +231,12 @@ do {
     let fm = NSFileManager.defaultManager()
     print("Reading from \(colorsPath)")
     let lists = try fm.colorListsAtPath(colorsPath)
-    let content = lists.toTemplate(platform)
-    print("Writing to \(destinationPath)")
-    try content.writeToFile(destinationPath, atomically: true, encoding: NSUTF8StringEncoding)
+    print("Found palettes: \(lists.count)")
+    if !lists.isEmpty {
+        let content = lists.toTemplate(platform)
+        print("Writing to \(destinationPath)")
+        try content.writeToFile(destinationPath, atomically: true, encoding: NSUTF8StringEncoding)
+    }
 }
 catch {
     fatalError(String(error))
