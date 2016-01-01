@@ -3,7 +3,6 @@
 import Cocoa
 import AppKit.NSColor
 
-
 extension NSColor {
     
     func toTemplate() -> String {
@@ -36,9 +35,10 @@ extension NSColorList {
     
     func colorNameForKey(key: String) -> String {
         var colorName = key
-        colorName = colorName.stringByReplacingOccurrencesOfString(" ", withString: "")
-        colorName = colorName.lowercaseString
-        colorName = colorName.stringByReplacingOccurrencesOfString("color", withString: "Color")
+            .stringByReplacingOccurrencesOfString(" ", withString: "")
+            .lowercaseString
+            .stringByReplacingOccurrencesOfString("color", withString: "Color")
+        
         if !colorName.hasSuffix("Color") {
             colorName += "Color"
         }
@@ -48,16 +48,14 @@ extension NSColorList {
     convenience init?(filePath: String) {
         guard isColorListFile(filePath) else { return nil }
 
-        var listName = (filePath as NSString).lastPathComponent
-        listName = (listName as NSString).stringByDeletingPathExtension
-        
+        let listName = filePath.nsString.lastPathComponent.nsString.stringByDeletingPathExtension
         self.init(name: listName, fromFile: filePath)
     }
 
 }
 
 func isColorListFile(fileName: String) -> Bool {
-    return (fileName as NSString).pathExtension.lowercaseString == "clr"
+    return fileName.nsString.pathExtension.lowercaseString == "clr"
 }
 
 extension Array where Element: NSColorList {
@@ -74,7 +72,7 @@ extension NSFileManager {
     
     func fullContentsPathsOfDirectoryAtPath(path: String) throws -> [String] {
         return try contentsOfDirectoryAtPath(path).map({
-            (path as NSString).stringByAppendingPathComponent($0)
+            path.nsString.stringByAppendingPathComponent($0)
         })
     }
 
@@ -84,16 +82,77 @@ extension NSFileManager {
 
 }
 
-guard let libraryDir = NSSearchPathForDirectoriesInDomains(NSSearchPathDirectory.LibraryDirectory, NSSearchPathDomainMask.UserDomainMask, true).first else {
-    fatalError("Failed to locate ~/Library")
+extension CollectionType where Index: Comparable {
+    subscript(safe index: Index) -> Generator.Element? {
+        guard index >= startIndex && index < endIndex else {
+            return nil
+        }
+        
+        return self[index]
+    }
+    
 }
 
-let colorsPath = (libraryDir as NSString).stringByAppendingPathComponent("Colors")
+extension CollectionType where Generator.Element: Equatable, Index: Comparable {
+    subscript(next element: Generator.Element) -> Generator.Element? {
+        guard let index = self.indexOf(element) else { return nil }
+        return self[safe: index.advancedBy(1)]
+    }
+}
+
+extension String {
+    var nsString: NSString { return self as NSString }
+}
+
+extension Process {
+    
+    static var info: NSProcessInfo {
+        return NSProcessInfo.processInfo()
+    }
+    
+    static var scriptInputFilesCount: Int {
+        return info.environment["SCRIPT_INPUT_FILE_COUNT"].flatMap({Int($0)}) ?? 0
+    }
+    
+    static var scriptInputFiles: [String] {
+        return (0..<scriptInputFilesCount).flatMap({ self.info.environment["SCRIPT_INPUT_FILE_\($0)"] })
+    }
+    
+    static var scriptOutputFilesCount: Int {
+        return info.environment["SCRIPT_OUTPUT_FILE_COUNT"].flatMap({Int($0)}) ?? 0
+    }
+    
+    static var scriptOutputFiles: [String] {
+        return (0..<scriptOutputFilesCount).flatMap({ self.info.environment["SCRIPT_OUTPUT_FILE_\($0)"] })
+    }
+    
+    static var argInput: String? {
+        return Process.arguments[next: "-i"]
+    }
+    
+    static var argOutput: String? {
+        return Process.arguments[next: "-o"]
+    }
+
+}
+
+func systemColorsPath() -> String {
+    guard let libraryDir = NSSearchPathForDirectoriesInDomains(NSSearchPathDirectory.LibraryDirectory, NSSearchPathDomainMask.UserDomainMask, true).first else {
+        fatalError("Failed to locate ~/Library")
+    }
+    
+    return libraryDir.nsString.stringByAppendingPathComponent("Colors")
+}
+
+let colorsPath = Process.argInput ?? Process.scriptInputFiles.first ?? systemColorsPath()
+let destinationPath = Process.argOutput ?? Process.scriptOutputFiles.first ?? "Colors.generated.swift"
+
 do {
     let fm = NSFileManager.defaultManager()
+    print("Reading from \(colorsPath)")
     let lists = try fm.colorListsAtPath(colorsPath)
-    let destinationPath = "Colors.generated.swift"
     let content = lists.toTemplate()
+    print("Writing to \(destinationPath)")
     try content.writeToFile(destinationPath, atomically: true, encoding: NSUTF8StringEncoding)
 }
 catch {
