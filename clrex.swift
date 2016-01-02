@@ -167,52 +167,6 @@ extension String {
     var nsString: NSString { return self as NSString }
 }
 
-//MARK: - Input arguments
-
-extension Process {
-    
-    static var info: NSProcessInfo {
-        return NSProcessInfo.processInfo()
-    }
-    
-    static var scriptInputFilesCount: Int {
-        return info.environment["SCRIPT_INPUT_FILE_COUNT"].flatMap({Int($0)}) ?? 0
-    }
-    
-    static var scriptInputFiles: [String] {
-        return (0..<scriptInputFilesCount).flatMap(scriptInputFile)
-    }
-    
-    static func scriptInputFile(i: Int) -> String? {
-        return self.info.environment["SCRIPT_INPUT_FILE_\(i)"]
-    }
-    
-    static var scriptOutputFilesCount: Int {
-        return info.environment["SCRIPT_OUTPUT_FILE_COUNT"].flatMap({Int($0)}) ?? 0
-    }
-    
-    static var scriptOutputFiles: [String] {
-        return (0..<scriptOutputFilesCount).flatMap(scriptOutputFile)
-    }
-    
-    static func scriptOutputFile(i: Int) -> String? {
-        return self.info.environment["SCRIPT_OUTPUT_FILE_\(i)"]
-    }
-    
-    static var argInput: String? {
-        return Process.arguments[next: "-i"]
-    }
-    
-    static var argOutput: String? {
-        return Process.arguments[next: "-o"]
-    }
-    
-    static var argPlatform: String? {
-        return Process.arguments[next: "-p"]
-    }
-
-}
-
 //MARK: - Templates
 
 protocol Template {
@@ -261,6 +215,56 @@ enum Platform: String {
     }
 }
 
+//MARK: - Input arguments
+
+extension Process {
+    
+    static var info: NSProcessInfo {
+        return NSProcessInfo.processInfo()
+    }
+    
+    static var scriptInputFilesCount: Int {
+        return info.environment["SCRIPT_INPUT_FILE_COUNT"].flatMap({Int($0)}) ?? 0
+    }
+    
+    static var scriptInputFiles: [String] {
+        return (0..<scriptInputFilesCount).flatMap(scriptInputFile)
+    }
+    
+    static func scriptInputFile(i: Int) -> String? {
+        return info.environment["SCRIPT_INPUT_FILE_\(i)"]
+    }
+    
+    static var scriptOutputFilesCount: Int {
+        return info.environment["SCRIPT_OUTPUT_FILE_COUNT"].flatMap({Int($0)}) ?? 0
+    }
+    
+    static var scriptOutputFiles: [String] {
+        return (0..<scriptOutputFilesCount).flatMap(scriptOutputFile)
+    }
+    
+    static func scriptOutputFile(i: Int) -> String? {
+        return info.environment["SCRIPT_OUTPUT_FILE_\(i)"]
+    }
+    
+    static func platform() -> Platform {
+        return info.environment["PLATFORM_NAME"] == "macosx" ? .osx : .ios
+    }
+    
+    static var argInput: String? {
+        return Process.arguments[next: "-i"]
+    }
+    
+    static var argOutput: String? {
+        return Process.arguments[next: "-o"]
+    }
+    
+    static var argPlatform: String? {
+        return Process.arguments[next: "-p"]
+    }
+    
+}
+
 //MARK: - Main
 
 func systemColorsPath() -> String {
@@ -273,7 +277,7 @@ func systemColorsPath() -> String {
 
 let colorsPath = Process.argInput ?? Process.scriptInputFiles.first ?? systemColorsPath()
 let destinationPath = Process.argOutput ?? Process.scriptOutputFiles.first ?? "Colors.generated.swift"
-let platform = Process.argPlatform.flatMap(Platform.init) ?? Platform.ios
+let platform = Process.argPlatform.flatMap(Platform.init) ?? Process.platform() ?? Platform.ios
 
 do {
     let fm = NSFileManager.defaultManager()
