@@ -95,7 +95,7 @@ extension Array where Element: NamedColor {
 extension NSColor {
     
     var rgbColor: NSColor? {
-        return colorUsingColorSpaceName(NSDeviceRGBColorSpace)
+        return colorUsingColorSpaceName(NSCalibratedRGBColorSpace)
     }
     
 }
@@ -183,7 +183,7 @@ protocol Template {
 struct OSX: Template {
     let module  = "AppKit"
     let type    = "NSColor"
-    let value   = "NSColor(deviceRed: %f, green: %f, blue: %f, alpha: %f)"
+    let value   = "NSColor(calibratedRed: %f, green: %f, blue: %f, alpha: %f)"
 }
 
 struct iOS: Template {
