@@ -123,7 +123,7 @@ func colorNameForKey(key: String) -> String {
     let suffix = "Color"
     var name = key
         .stringByReplacingOccurrencesOfString(" ", withString: "")
-        .lowercaseString
+        .firstLetterLowercasedString
         .stringByReplacingOccurrencesOfString("color", withString: suffix)
     
     if !name.hasSuffix(suffix) {
@@ -165,6 +165,11 @@ extension CollectionType where Generator.Element: Equatable, Index: Comparable {
 
 extension String {
     var nsString: NSString { return self as NSString }
+    
+    var firstLetterLowercasedString: String {
+        guard !isEmpty else { return self }
+        return String(self[startIndex]).lowercaseString + self[startIndex.advancedBy(1)..<endIndex]
+    }
 }
 
 //MARK: - Templates
