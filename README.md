@@ -63,18 +63,20 @@ For OSX:
 ```swift
 import AppKit
 
-enum TestColors {
+enum MyColors {
 
   static func blackColor() -> NSColor {
-    return NSColor(deviceRed: 0.000000, green: 0.000000, blue: 0.000000, alpha: 1.000000)
+    return NSColor(calibratedRed: 0.000000, green: 0.000000, blue: 0.000000, alpha: 1.000000)
   }
 
   static func grayColor() -> NSColor {
-    return NSColor(deviceRed: 0.265146, green: 0.265153, blue: 0.265149, alpha: 1.000000)
+    return NSColor(calibratedRed: 0.265146, green: 0.265153, blue: 0.265149, alpha: 1.000000)
   }
 
 }
 ```
+
+You can check [this repo](https://github.com/ilyapuchka/ViewControllerThinning) for example of project using clrex.
 
 # License
 clrex is created by [Ilya Puchka](https://twitter.com/ilyapuchka) and released under a MIT License.
