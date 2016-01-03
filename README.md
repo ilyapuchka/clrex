@@ -32,7 +32,9 @@ This command will lookup `./Palletes` folder and will generate `./Colors.swift` 
 
 If you use clrex in "Run Script" phase of your project you can use input and output files instead of command line arguments. Script will use first input file as a folder for lookup and first output file as path to generated file.
 
-_Reminder: do not forget to add generated file to "Compile Sources" phase._ 
+Then build your project once and add generated file to the project.
+
+_Tip: If you change your sorce *.clr file but don't see changes to be reflected in generated file when you build then clean your project and build again._ 
 
 
 # Generated code example
