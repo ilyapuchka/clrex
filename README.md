@@ -1,7 +1,7 @@
 # clrex
 Simple script to generate colors factory methods from clr files
 
-This basic script will help to generate UIColor factory methods from you system colors palattes.
+This basic script will help to generate UIColor factory methods from you system colors palettes.
 Inspired by [this tip](http://natashatherobot.com/xcode-color-palette/) by [@natashatherobot](https://twitter.com/natashatherobot) and [ColorTools](https://github.com/ramonpoca/ColorTools).
 
 # Usage
@@ -34,7 +34,7 @@ If you use clrex in "Run Script" phase of your project you can use input and out
 
 Then build your project once and add generated file to the project.
 
-_Tip: If you change your sorce *.clr file but don't see changes to be reflected in generated file when you build then clean your project and build again._ 
+_Tip: If you change your source *.clr file but don't see changes to be reflected in generated file when you build then clean your project and build again._ 
 
 
 # Generated code example
