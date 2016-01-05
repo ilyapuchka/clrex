@@ -22,6 +22,8 @@ If you prefer to use binary then download `clrex` and run it in "Run Script" pha
 
 `-p ios|osx` - the platform to generate file for. By default will generate file for iOS.
 
+`--setup` - if specified will install colors list to `~/Library/Colors/`
+
 _Example_:
 
 ```
