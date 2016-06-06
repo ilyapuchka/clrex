@@ -1,6 +1,8 @@
 # clrex
 Simple script to generate colors factory methods from clr files
 
+> Probably colors are not the only resources that you would like to operate on in a strongly typed safe manner. For that checkout [SwiftGen](https://github.com/AliSoftware/SwiftGen) or [R.Swift](https://github.com/mac-cain13/R.swift) which both support color pallets and many other cool stuf.
+
 This basic script will help to generate UIColor factory methods from you system colors palettes.
 Inspired by [this tip](http://natashatherobot.com/xcode-color-palette/) by [@natashatherobot](https://twitter.com/natashatherobot) and [ColorTools](https://github.com/ramonpoca/ColorTools).
 
