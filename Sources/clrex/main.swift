@@ -46,12 +46,12 @@ class NamedColor {
     }
     
     init(key: String, color: NSColor) {
-        self.name = colorNameForKey(key)
+        self.name = colorNameForKey(key: key)
         self.color = color
     }
     
     func toTemplate(platform: Platform) -> String {
-        return String(format: platform.methodTemplate, name, color.toTemplate(platform))
+        return String(format: platform.methodTemplate, name, color.toTemplate(platform: platform))
     }
     
 }
@@ -67,7 +67,7 @@ extension NSColor {
 extension NSColorList {
     
     func toTemplate(platform: Platform) -> String {
-        return String(format: platform.namespaceTemplate, name!, allNamedColors.toTemplate(platform))
+        return String(format: platform.namespaceTemplate, name!, allNamedColors.toTemplate(platform: platform))
     }
 
 }
@@ -76,8 +76,8 @@ extension Array where Element: NSColorList {
     
     func toTemplate(platform: Platform) -> String {
         return note + self
-            .map({ $0.toTemplate(platform) })
-            .reduce(platform.importTemplate, combine: +)
+            .map({ $0.toTemplate(platform: platform) })
+            .reduce(platform.importTemplate, +)
     }
     
 }
@@ -85,8 +85,8 @@ extension Array where Element: NSColorList {
 extension Array where Element: NamedColor {
     func toTemplate(platform: Platform) -> String {
         return self
-            .map({ $0.toTemplate(platform) })
-            .reduce("", combine: +)
+            .map({ $0.toTemplate(platform: platform) })
+            .reduce("", +)
     }
 }
 
@@ -95,9 +95,31 @@ extension Array where Element: NamedColor {
 extension NSColor {
     
     var rgbColor: NSColor? {
-        return colorUsingColorSpaceName(NSCalibratedRGBColorSpace)
+        return usingColorSpaceName(NSCalibratedRGBColorSpace)
     }
     
+    convenience init?(hex: String) {
+        var hex = hex
+        if hex.hasPrefix("#") {
+            hex = String(hex.characters.dropFirst())
+        }
+        if hex.characters.count < 7 {
+            hex = hex + "ff"
+        }
+        
+        var colorCode = UInt32()
+        
+        let scanner = Scanner(string: hex)
+        if scanner.scanHexInt32(&colorCode) {
+            let redByte = CGFloat((colorCode & 0xff000000) >> 24)/255
+            let greenByte = CGFloat((colorCode & 0x00ff0000) >> 16)/255
+            let blueByte =  CGFloat((colorCode & 0xff00) >> 8)/255
+            let alphaByte =  CGFloat((colorCode & 0xff))/255
+            self.init(colorSpace: NSColorSpace.genericRGB, components: [redByte, greenByte, blueByte, alphaByte], count: 4)
+        } else {
+            return nil
+        }
+    }
 }
 
 extension NSColorList {
@@ -107,13 +129,13 @@ extension NSColorList {
     }
     
     func namedColorWithKey(key: String) -> NamedColor? {
-        return colorWithKey(key)?.rgbColor.map({ NamedColor(key: key, color: $0) })
+        return color(withKey: key)?.rgbColor.map({ NamedColor(key: key, color: $0) })
     }
     
     convenience init?(filePath: String) {
-        guard isColorListFile(filePath) else { return nil }
+        guard isColorListFile(fileName: filePath) else { return nil }
         
-        let listName = filePath.nsString.lastPathComponent.nsString.stringByDeletingPathExtension
+        let listName = filePath.nsString.lastPathComponent.nsString.deletingPathExtension
         self.init(name: listName, fromFile: filePath)
     }
 
@@ -122,9 +144,9 @@ extension NSColorList {
 func colorNameForKey(key: String) -> String {
     let suffix = "Color"
     var name = key
-        .stringByReplacingOccurrencesOfString(" ", withString: "")
+        .replacingOccurrences(of: " ", with: "")
         .firstLetterLowercasedString
-        .stringByReplacingOccurrencesOfString("color", withString: suffix)
+        .replacingOccurrences(of: "color", with: suffix)
     
     if !name.hasSuffix(suffix) {
         name += suffix
@@ -133,33 +155,33 @@ func colorNameForKey(key: String) -> String {
 }
 
 func isColorListFile(fileName: String) -> Bool {
-    return fileName.nsString.pathExtension.lowercaseString == "clr"
+    return fileName.nsString.pathExtension.lowercased() == "clr"
 }
 
-extension NSFileManager {
+extension FileManager {
     
-    func fullContentsPathsOfDirectoryAtPath(path: String) throws -> [String] {
-        return try contentsOfDirectoryAtPath(path).map(path.nsString.stringByAppendingPathComponent)
+    func fullContentsPathsOfDirectory(at path: String) throws -> [String] {
+        return try contentsOfDirectory(atPath: path).map(path.nsString.appendingPathComponent)
     }
 
-    func colorListsAtPath(path: String) throws -> [NSColorList] {
-        return try fullContentsPathsOfDirectoryAtPath(path).flatMap(NSColorList.init)
+    func colorLists(at path: String) throws -> [NSColorList] {
+        return try fullContentsPathsOfDirectory(at: path).flatMap(NSColorList.init(filePath:))
     }
 
 }
 
-extension CollectionType where Index: Comparable {
-    subscript(safe index: Index) -> Generator.Element? {
+extension Collection where Index: Comparable {
+    subscript(safe index: Index) -> Iterator.Element? {
         guard index >= startIndex && index < endIndex else { return nil }
         return self[index]
     }
     
 }
 
-extension CollectionType where Generator.Element: Equatable, Index: Comparable {
-    subscript(next element: Generator.Element) -> Generator.Element? {
-        guard let index = self.indexOf(element) else { return nil }
-        return self[safe: index.advancedBy(1)]
+extension Collection where Iterator.Element: Equatable, Index: Comparable & Strideable {
+    subscript(next element: Iterator.Element) -> Iterator.Element? {
+        guard let index = self.index(of: element) else { return nil }
+        return self[safe: index.advanced(by: 1)]
     }
 }
 
@@ -168,7 +190,7 @@ extension String {
     
     var firstLetterLowercasedString: String {
         guard !isEmpty else { return self }
-        return String(self[startIndex]).lowercaseString + self[startIndex.advancedBy(1)..<endIndex]
+        return String(self[startIndex]).lowercased() + self[characters.index(startIndex, offsetBy: 1)..<endIndex]
     }
 }
 
@@ -224,8 +246,8 @@ enum Platform: String {
 
 extension Process {
     
-    static var info: NSProcessInfo {
-        return NSProcessInfo.processInfo()
+    static var info: ProcessInfo {
+        return ProcessInfo.processInfo
     }
     
     static var scriptInputFilesCount: Int {
@@ -257,19 +279,32 @@ extension Process {
     }
     
     static var argInput: String? {
-        return Process.arguments[next: "-i"]
+        return info.arguments[next: "-i"]
     }
     
     static var argOutput: String? {
-        return Process.arguments[next: "-o"]
+        return info.arguments[next: "-o"]
     }
     
     static var argPlatform: String? {
-        return Process.arguments[next: "-p"]
+        return info.arguments[next: "-p"]
     }
     
     static var argSetup: Bool {
-        return Process.arguments.contains("--setup")
+        return info.arguments.contains("--setup")
+    }
+    
+    static var argAdd: (paletteName: String, colorName: String, colorHEX: String)? {
+        guard let paletteName = info.arguments[next: "add"] else { return nil }
+        guard let colorName = info.arguments[next: paletteName] else { return nil }
+        guard let colorHEX = info.arguments[next: colorName] else { return nil }
+        return (paletteName, colorName, colorHEX)
+    }
+    
+    static var argDelete: (paletteName: String, colorName: String)? {
+        guard let paletteName = info.arguments[next: "delete"] else { return nil }
+        guard let colorName = info.arguments[next: paletteName] else { return nil }
+        return (paletteName, colorName)
     }
     
 }
@@ -277,35 +312,57 @@ extension Process {
 //MARK: - Main
 
 func systemColorsPath() -> String {
-    guard let libraryDir = NSSearchPathForDirectoriesInDomains(NSSearchPathDirectory.LibraryDirectory, NSSearchPathDomainMask.UserDomainMask, true).first else {
+    guard let libraryDir = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.libraryDirectory, FileManager.SearchPathDomainMask.userDomainMask, true).first else {
         fatalError("Failed to locate ~/Library")
     }
     
-    return libraryDir.nsString.stringByAppendingPathComponent("Colors")
+    return libraryDir.nsString.appendingPathComponent("Colors")
 }
 
 let colorsPath = Process.argInput ?? Process.scriptInputFiles.first ?? systemColorsPath()
 let destinationPath = Process.argOutput ?? Process.scriptOutputFiles.first ?? "Colors.generated.swift"
-let platform = Process.argPlatform.flatMap(Platform.init) ?? Process.platform() ?? Platform.ios
+let platform = Process.argPlatform.flatMap(Platform.init) ?? Process.platform()
 
 do {
-    let fm = NSFileManager.defaultManager()
+    let fm = FileManager.default
     print("Reading from \(colorsPath)")
-    let lists = try fm.colorListsAtPath(colorsPath)
-    print("Found palettes: \(lists.count)")
-    if !lists.isEmpty {
-        let content = lists.toTemplate(platform)
+    var lists = try fm.colorLists(at: colorsPath)
+    if let add = Process.argAdd {
+        let fileName = colorsPath
+            .nsString.appendingPathComponent(add.paletteName)
+            .nsString.appendingPathExtension("clr")!
+        
+        let list = NSColorList(filePath: fileName) ?? NSColorList(name: add.paletteName)
+        lists = [list]
+        if let color = NSColor(hex: add.colorHEX) {
+            list.insertColor(color, key: add.colorName, at: 0)
+            list.write(toFile: fileName)
+        }
+    } else if let delete = Process.argDelete {
+        lists = []
+        let fileName = colorsPath
+            .nsString.appendingPathComponent(delete.paletteName)
+            .nsString.appendingPathExtension("clr")!
+        
+        if let list = NSColorList(filePath: fileName) {
+            list.removeColor(withKey: delete.colorName)
+            list.write(toFile: fileName)
+        }
+    } else if !lists.isEmpty {
+        print("Found palettes: \(lists.count)")
+        let content = lists.toTemplate(platform: platform)
         print("Writing to \(destinationPath)")
-        try content.writeToFile(destinationPath, atomically: true, encoding: NSUTF8StringEncoding)
-        if Process.argSetup {
-            for list in lists {
-                list.writeToFile(nil)
-            }
+        try content.write(toFile: destinationPath, atomically: true, encoding: String.Encoding.utf8)
+    }
+    
+    if Process.argSetup {
+        for list in lists {
+            list.write(toFile: nil)
         }
     }
 }
 catch {
-    fatalError(String(error))
+    fatalError(String(describing: error))
 }
 
 

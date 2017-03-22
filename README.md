@@ -14,9 +14,9 @@ To use this script in your project download `clrex.swift`, put it somewhere in y
 xcrun swift -sdk $(xcrun --show-sdk-path --sdk macosx) PATH_TO_SCRIPT/clrex.swift
 ```
 
-If you prefer to use binary then download `clrex` and run it in "Run Script" phase using `./PATH_TO_BINARY/clrex`
+If you prefer to use binary then build it with `swift build` and run it in "Run Script" phase using `./PATH_TO_BINARY/clrex`
 
-####Input arguments
+### Input arguments
 
 `-i PATH` - the path to folder to lookup `*.clr` files. By defaul will lookup `~/Library/Colors`.
 
@@ -26,6 +26,10 @@ If you prefer to use binary then download `clrex` and run it in "Run Script" pha
 
 `--setup` - if specified will install colors list to `~/Library/Colors/`
 
+`add <color list name> <color name> <hex color>` - add color to color list in input folder, or create new list.
+
+`delete <color list name> <color name>` - delete color from color list
+
 _Example_:
 
 ```
@@ -33,6 +37,18 @@ _Example_:
 ```
 
 This command will lookup `./Palletes` folder and will generate `./Colors.swift` file for iOS.
+
+```
+./clrex -i ./Palletes/ add MyColors Orange ffa500 --setup 
+```
+
+This command will lookup `./Palletes` folder for `MyColors.clr` and will add `Orange` color (`#ffa500` in _Generic RGB color space_) and then will setup color list in user library folder.
+
+```
+./clrex -i ./Palletes/ delete MyColors Orange
+```
+
+This command will remove a color added with previous command.
 
 If you use clrex in "Run Script" phase of your project you can use input and output files instead of command line arguments. Script will use first input file as a folder for lookup and first output file as path to generated file.
 
